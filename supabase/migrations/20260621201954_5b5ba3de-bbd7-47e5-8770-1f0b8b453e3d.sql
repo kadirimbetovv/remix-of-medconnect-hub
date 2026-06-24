@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.mentor_booked_slots(uuid) FROM PUBLIC, anon;
