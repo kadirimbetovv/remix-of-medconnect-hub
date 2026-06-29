@@ -65,9 +65,14 @@ function LoginPage() {
         console.warn("pending profile flush failed", flushErr);
       }
 
+      if ((user.email ?? "").toLowerCase() === "admin@medmentor.uz") {
+        nav({ to: "/admin" });
+        return;
+      }
       const role = pendingRole
         ?? (await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()).data?.role;
       nav({ to: role === "mentor" ? "/mentor" : "/dashboard" });
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
