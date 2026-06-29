@@ -20,8 +20,7 @@ export async function createNotification(input: {
   link?: string;
   related_id?: string;
 }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("notifications") as any).insert({
+  const { error } = await supabase.from("notifications").insert({
     user_id: input.user_id,
     type: input.type,
     title: input.title,

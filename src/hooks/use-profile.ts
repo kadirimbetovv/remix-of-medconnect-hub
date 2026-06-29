@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/with-timeout";
 
 export type Profile = {
   id: string;
@@ -18,16 +19,6 @@ export type Profile = {
   email: string | null;
   phone: string | null;
 };
-
-function withTimeout<T>(p: PromiseLike<T>, ms = 8000): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error("Request timed out")), ms);
-    Promise.resolve(p).then(
-      (v) => { clearTimeout(t); resolve(v); },
-      (e) => { clearTimeout(t); reject(e); },
-    );
-  });
-}
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
