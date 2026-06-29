@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Activity } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ensureAdminUser } from "@/lib/ensure-admin.functions";
+
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Log in — MedMentor" }] }),
@@ -15,6 +17,12 @@ function LoginPage() {
   const [pw, setPw] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Make sure the hardcoded admin account exists so testers can sign in.
+  useEffect(() => {
+    ensureAdminUser().catch((e) => console.warn("ensureAdminUser failed", e));
+  }, []);
+
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +65,14 @@ function LoginPage() {
         console.warn("pending profile flush failed", flushErr);
       }
 
+      if ((user.email ?? "").toLowerCase() === "admin@medmentor.uz") {
+        nav({ to: "/admin" });
+        return;
+      }
       const role = pendingRole
         ?? (await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()).data?.role;
       nav({ to: role === "mentor" ? "/mentor" : "/dashboard" });
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
@@ -105,6 +118,10 @@ function LoginPage() {
             {" · "}
             <Link to="/signup" search={{ role: "mentor" }} className="text-primary hover:underline">as mentor</Link>
           </p>
+          <p className="mt-3 text-center text-[11px] text-muted-foreground/70">
+            Admin login: admin@medmentor.uz / admin2024
+          </p>
+
         </div>
       </div>
     </div>
