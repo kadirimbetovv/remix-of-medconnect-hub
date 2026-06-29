@@ -6,11 +6,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/use-profile";
 import { useMentors, useMyRequests, useMySessions } from "@/lib/data-hooks";
 import { InitialsAvatar } from "@/components/initials-avatar";
+import { createNotification } from "@/lib/notifications";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Home — MedMentor" }] }),
   component: DashboardPage,
 });
+
+function greetingForHour(h: number) {
+  if (h < 5) return "Good evening";
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 function DashboardPage() {
   const { profile } = useProfile();
@@ -21,6 +29,7 @@ function DashboardPage() {
 
   const requestedIds = new Set(requests.map((r) => r.mentor_id));
   const firstName = profile?.full_name?.split(" ")[0] ?? "there";
+  const greeting = greetingForHour(new Date().getHours());
 
   const handleRequest = async (mentorId: string, name: string) => {
     if (!profile || profile.role !== "student") return;
@@ -31,8 +40,16 @@ function DashboardPage() {
       mentor_id: mentorId,
     });
     setBusy(null);
-    if (error) toast.error(error.message);
-    else { toast.success(`Request sent to ${name}`); reload(); }
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Request sent to ${name}`);
+    await createNotification({
+      user_id: mentorId,
+      type: "request_received",
+      title: "New mentorship request",
+      body: `${profile.full_name} requested mentorship.`,
+      link: "/mentor",
+    });
+    reload();
   };
 
   const stats = [
@@ -48,7 +65,7 @@ function DashboardPage() {
         <div className="relative flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              Good morning, {firstName} <span className="ml-1">👋</span>
+              {greeting}, {firstName} <span className="ml-1">👋</span>
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {profile?.specialty && (

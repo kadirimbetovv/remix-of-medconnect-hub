@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/with-timeout";
 import type { Profile } from "@/hooks/use-profile";
 
 export type MentorshipRequest = {
@@ -26,16 +27,6 @@ export type Session = {
   location: string | null;
   status: "pending" | "confirmed" | "completed" | "cancelled";
 };
-
-function withTimeout<T>(p: PromiseLike<T>, ms = 8000): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error("Request timed out")), ms);
-    Promise.resolve(p).then(
-      (v) => { clearTimeout(t); resolve(v); },
-      (e) => { clearTimeout(t); reject(e); },
-    );
-  });
-}
 
 export function useMentors() {
   const [mentors, setMentors] = useState<Profile[]>([]);
@@ -70,7 +61,10 @@ export function useMyRequests(userId: string | undefined, role: "student" | "men
   const [requests, setRequests] = useState<MentorshipRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const reload = async () => {
+  const activeRef = useRef(true);
+
+  const reload = useCallback(async () => {
+    if (!activeRef.current) return;
     if (!userId || !role) { setLoading(false); return; }
     setLoading(true); setError(null);
     try {
@@ -78,17 +72,21 @@ export function useMyRequests(userId: string | undefined, role: "student" | "men
       const res = await withTimeout(
         supabase.from("mentorship_requests").select("*").eq(col, userId).order("created_at", { ascending: false }),
       );
+      if (!activeRef.current) return;
       if (res.error) throw res.error;
       setRequests((res.data as MentorshipRequest[]) ?? []);
     } catch (e) {
+      if (!activeRef.current) return;
       setError(e instanceof Error ? e.message : "Failed to load requests");
     } finally {
-      setLoading(false);
+      if (activeRef.current) setLoading(false);
     }
-  };
+  }, [userId, role]);
+
   useEffect(() => {
+    activeRef.current = true;
     reload();
-    if (!userId || !role) return;
+    if (!userId || !role) return () => { activeRef.current = false; };
     const col = role === "student" ? "student_id" : "mentor_id";
     const channel = supabase
       .channel(`mreq:${role}:${userId}`)
@@ -98,9 +96,11 @@ export function useMyRequests(userId: string | undefined, role: "student" | "men
         () => reload(),
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-    /* eslint-disable-next-line */
-  }, [userId, role]);
+    return () => {
+      activeRef.current = false;
+      supabase.removeChannel(channel);
+    };
+  }, [userId, role, reload]);
   return { requests, loading, error, reload };
 }
 

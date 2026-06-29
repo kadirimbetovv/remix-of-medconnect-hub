@@ -8,13 +8,12 @@ export function useNotifications(userId: string | undefined) {
 
   const load = useCallback(async () => {
     if (!userId) { setItems([]); setLoading(false); return; }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase.from("notifications") as any)
+    const { data } = await supabase.from("notifications")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(30);
-    setItems((data as Notification[]) ?? []);
+    setItems((data as Notification[] | null) ?? []);
     setLoading(false);
   }, [userId]);
 
@@ -36,8 +35,7 @@ export function useNotifications(userId: string | undefined) {
 
   const markAllRead = async () => {
     if (!userId || unread === 0) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from("notifications") as any)
+    await supabase.from("notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("user_id", userId)
       .is("read_at", null);
@@ -45,8 +43,7 @@ export function useNotifications(userId: string | undefined) {
   };
 
   const markRead = async (id: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from("notifications") as any)
+    await supabase.from("notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("id", id);
     load();

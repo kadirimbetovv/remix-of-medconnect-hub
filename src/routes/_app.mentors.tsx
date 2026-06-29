@@ -112,8 +112,8 @@ function MentorsPage() {
   const toggleSave = (m: Profile) => {
     setSaved((s) => {
       const n = new Set(s);
-      if (n.has(m.id)) { n.delete(m.id); toast(`Removed ${m.full_name} from saved`); }
-      else { n.add(m.id); toast.success(`Saved ${m.full_name}`); }
+      if (n.has(m.id)) { n.delete(m.id); toast(`Removed ${m.full_name} (this session only)`); }
+      else { n.add(m.id); toast.success(`Pinned ${m.full_name} (this session only)`); }
       return n;
     });
   };
