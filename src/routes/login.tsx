@@ -31,7 +31,20 @@ function LoginPage() {
         const key = `pendingProfile:${user.id}`;
         const raw = window.localStorage.getItem(key);
         if (raw) {
-          const pending = JSON.parse(raw) as { role: "student" | "mentor" } & Record<string, unknown>;
+          const pending = JSON.parse(raw) as {
+            id: string;
+            role: "student" | "mentor";
+            full_name: string;
+            email: string | null;
+            city: string | null;
+            specialty: string | null;
+            university: string | null;
+            year_of_study: number | null;
+            languages: string | null;
+            hospital: string | null;
+            years_experience: number | null;
+            license_number: string | null;
+          };
           const { data: existing } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
           if (!existing) {
             const { error: pErr } = await supabase.from("profiles").insert(pending);
