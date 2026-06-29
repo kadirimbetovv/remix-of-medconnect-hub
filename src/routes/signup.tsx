@@ -39,6 +39,7 @@ function SignupPage() {
   const [otherChecked, setOtherChecked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [checkEmail, setCheckEmail] = useState<string | null>(null);
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const toggleLang = (l: string) => {
@@ -73,6 +74,19 @@ function SignupPage() {
         years_experience: role === "mentor" ? Number(form.years_experience) || null : null,
         license_number: role === "mentor" ? form.license_number : null,
       };
+
+      // If email confirmation is enabled, there is no session yet — RLS would
+      // reject the profile insert. Stash the profile locally; the login page
+      // will flush it after the user confirms and signs in.
+      if (!data.session) {
+        try {
+          window.localStorage.setItem(`pendingProfile:${user.id}`, JSON.stringify(profile));
+        } catch { /* ignore quota errors */ }
+        setCheckEmail(form.email);
+        setBusy(false);
+        return;
+      }
+
       const { error: pErr } = await supabase.from("profiles").insert(profile);
       if (pErr) throw pErr;
       nav({ to: role === "mentor" ? "/mentor" : "/dashboard" });
@@ -82,6 +96,33 @@ function SignupPage() {
       setBusy(false);
     }
   };
+
+  if (checkEmail) {
+    return (
+      <div className="relative min-h-screen bg-background px-4 py-12 text-foreground">
+        <div className="absolute right-4 top-4"><ThemeToggle /></div>
+        <div className="pointer-events-none absolute -top-32 left-1/2 h-[400px] w-[600px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
+        <div className="relative mx-auto w-full max-w-md">
+          <Link to="/" className="mb-8 flex items-center justify-center gap-2">
+            <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 ring-1 ring-primary/30">
+              <Activity className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">MedMentor</span>
+          </Link>
+          <div className="glass-card rounded-2xl p-8 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              We've sent a confirmation link to <span className="font-medium text-foreground">{checkEmail}</span>.
+              Click it to verify your account, then log in to finish setting up your profile.
+            </p>
+            <Link to="/login" className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+              Go to log in
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-background px-4 py-12 text-foreground">

@@ -24,8 +24,29 @@ function LoginPage() {
       if (err) throw err;
       const user = data.user;
       if (!user) throw new Error("Login failed.");
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-      nav({ to: profile?.role === "mentor" ? "/mentor" : "/dashboard" });
+
+      // Flush any profile stashed during a confirm-email signup
+      let pendingRole: "student" | "mentor" | null = null;
+      try {
+        const key = `pendingProfile:${user.id}`;
+        const raw = window.localStorage.getItem(key);
+        if (raw) {
+          const pending = JSON.parse(raw) as { role: "student" | "mentor" } & Record<string, unknown>;
+          const { data: existing } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
+          if (!existing) {
+            const { error: pErr } = await supabase.from("profiles").insert(pending);
+            if (pErr) throw pErr;
+          }
+          pendingRole = pending.role;
+          window.localStorage.removeItem(key);
+        }
+      } catch (flushErr) {
+        console.warn("pending profile flush failed", flushErr);
+      }
+
+      const role = pendingRole
+        ?? (await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()).data?.role;
+      nav({ to: role === "mentor" ? "/mentor" : "/dashboard" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
