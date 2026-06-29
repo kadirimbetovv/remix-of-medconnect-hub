@@ -18,6 +18,12 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Make sure the hardcoded admin account exists so testers can sign in.
+  useEffect(() => {
+    ensureAdminUser().catch((e) => console.warn("ensureAdminUser failed", e));
+  }, []);
+
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true); setError(null);
