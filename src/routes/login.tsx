@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Activity } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ensureAdminUser } from "@/lib/ensure-admin.functions";
+
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Log in — MedMentor" }] }),
