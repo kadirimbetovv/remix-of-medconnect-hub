@@ -71,7 +71,7 @@ export const listAllUsers = createServerFn({ method: "GET" })
         city: p?.city ?? null,
         created_at: u.created_at ?? "",
         last_sign_in_at: lastSeen,
-        status: active ? "Active" : "Inactive",
+        status: (active ? "Active" : "Inactive") as "Active" | "Inactive",
       };
     }).sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
   });
