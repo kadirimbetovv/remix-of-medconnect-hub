@@ -118,6 +118,10 @@ function LoginPage() {
             {" · "}
             <Link to="/signup" search={{ role: "mentor" }} className="text-primary hover:underline">as mentor</Link>
           </p>
+          <p className="mt-3 text-center text-[11px] text-muted-foreground/70">
+            Admin login: admin@medmentor.uz / admin2024
+          </p>
+
         </div>
       </div>
     </div>
