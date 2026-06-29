@@ -13,8 +13,9 @@ export const Route = createFileRoute("/admin")({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw redirect({ to: "/login" });
     if ((user.email ?? "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      throw redirect({ to: "/" });
+      throw redirect({ to: "/login" });
     }
+
   },
   component: AdminPage,
 });
