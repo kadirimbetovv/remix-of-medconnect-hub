@@ -109,11 +109,11 @@ function RootShell({ children }: { children: ReactNode }) {
   // React hydrates, preventing a flash and keeping theme independent of auth state.
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`;
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
         {children}
         <Scripts />
